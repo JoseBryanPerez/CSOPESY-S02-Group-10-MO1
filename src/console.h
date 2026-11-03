@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "scheduler.h"
+#include "round_robin_scheduler.h"
 
 class Console {
 public:

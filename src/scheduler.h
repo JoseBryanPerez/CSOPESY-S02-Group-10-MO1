@@ -29,6 +29,7 @@
 
 struct Core {
     int id = 0;
+    uint64_t ticksRan = 0;
     std::shared_ptr<Process> proc;   // null = idle
     bool busy() const { return proc != nullptr; }
 };
@@ -53,18 +54,10 @@ public:
     uint64_t cpuCycles() const;
     const Config& config() const { return cfg_; }
 
-private:
-    void loop();
-    void tick();                       // caller holds mtx_
-
-    void spawnAutoProcess();           // scheduler-start's pN generator
-    void wakeSleepers();
-    void dispatchIdleCores();
-    void runCores();
+protected:
+    virtual void runCores();
     void finishProcess(Core& core);
     void sleepProcess(Core& core, uint8_t ticks);
-
-    std::shared_ptr<Process> makeProcess(const std::string& name);
 
     Config cfg_;
     uint64_t tickIntervalUs_;
@@ -82,6 +75,16 @@ private:
     uint64_t nextAutoIndex_ = 1;
     bool generating_ = false;
 
+private:
+    void loop();
+    void tick();                       // caller holds mtx_
+
+    void spawnAutoProcess();           // scheduler-start's pN generator
+    void wakeSleepers();
+    void dispatchIdleCores();
+
+    std::shared_ptr<Process> makeProcess(const std::string& name);
+    
     std::atomic<bool> running_{false};
     std::thread thread_;
 };

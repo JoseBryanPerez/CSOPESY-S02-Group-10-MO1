@@ -98,12 +98,21 @@ void Console::cmdInitialize() {
     }
 
     if (scheduler_) scheduler_->stop();   // re-initialize: throw away the old run
-    scheduler_ = std::make_unique<Scheduler>(cfg, tickIntervalUs_);
+    
+    bool showWarning = false;
+    if (cfg.scheduler == "rr") {
+        scheduler_ = std::make_unique<RoundRobinScheduler>(cfg, tickIntervalUs_);
+    } else if (cfg.scheduler == "fcfs") {
+        scheduler_ = std::make_unique<Scheduler>(cfg, tickIntervalUs_);
+    } else {
+        scheduler_ = std::make_unique<Scheduler>(cfg, tickIntervalUs_);
+        showWarning = true;
+    }
     scheduler_->start();
     initialized_ = true;
 
     std::cout << "Initialized from " << configPath_ << ": " << describeConfig(cfg) << "\n";
-    if (cfg.scheduler != "fcfs") {
+    if (showWarning) {
         std::cout << "[WARN] Scheduler '" << cfg.scheduler
                   << "' is not implemented in this build -- running as FCFS.\n";
     }
