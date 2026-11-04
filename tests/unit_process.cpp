@@ -33,5 +33,37 @@ int main() {
     EXPECT(p.executeNext(2) == StepResult::Sleep && p.sleepTicks() == 7, "SLEEP(7) relinquishes the core");
     EXPECT(p.executeNext(0) == StepResult::Finished, "last instruction finishes the process");
     EXPECT(p.instructionsExecuted() == 8 && p.isComplete(), "pc == lines of code at the end");
+
+    const uint16_t loopVar = S.internVar("loopVar");
+    Process loop(2, "loop", 0);
+    loop.setProgram({
+        ins(OpType::DECLARE, loopVar, 0, 0),
+        ins(OpType::FOR_BEGIN, 0, 3, 0),
+        ins(OpType::ADD, loopVar, loopVar, 1, kOperandAIsVar),
+        ins(OpType::FOR_END, 0, 0, 0),
+        ins(OpType::PRINT, 0, S.internText("loop result: "), loopVar, kPrintHasVar),
+    });
+    StepResult loopResult = StepResult::Continue;
+    while (loopResult == StepResult::Continue) loopResult = loop.executeNext(1);
+    EXPECT(loopResult == StepResult::Finished, "FOR program finishes");
+    EXPECT(loop.logs().size() == 1 && loop.logs()[0].value == 3,
+           "FOR repeats its body the requested number of times");
+    EXPECT(loop.instructionsExecuted() == 9,
+           "executed instruction count includes each repeated body pass");
+
+    Process nested(3, "nested", 0);
+    nested.setProgram({
+        ins(OpType::DECLARE, loopVar, 0, 0),
+        ins(OpType::FOR_BEGIN, 0, 2, 0),
+        ins(OpType::FOR_BEGIN, 0, 3, 0),
+        ins(OpType::ADD, loopVar, loopVar, 1, kOperandAIsVar),
+        ins(OpType::FOR_END, 0, 0, 0),
+        ins(OpType::FOR_END, 0, 0, 0),
+        ins(OpType::PRINT, 0, S.internText("nested result: "), loopVar, kPrintHasVar),
+    });
+    StepResult nestedResult = StepResult::Continue;
+    while (nestedResult == StepResult::Continue) nestedResult = nested.executeNext(0);
+    EXPECT(nestedResult == StepResult::Finished && nested.logs().size() == 1 &&
+           nested.logs()[0].value == 6, "nested FOR loops repeat inner body for each outer pass");
     return failures ? 1 : 0;
 }

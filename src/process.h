@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <ctime>
 #include <string>
+#include <utility>
 #include <unordered_map>
 #include <vector>
 
@@ -46,7 +47,7 @@ public:
     void setProgram(std::vector<Instruction> program);
     void releaseProgram();            // called when finished, frees the instruction memory
 
-    uint64_t instructionsExecuted() const { return pc_; }   // "Current instruction line"
+    uint64_t instructionsExecuted() const { return executed_; }   // includes repeated loop body steps
     uint64_t totalInstructions() const { return total_; }   // "Lines of code"
     bool isComplete() const { return programReady_ && pc_ >= total_; }
 
@@ -64,6 +65,10 @@ private:
     std::vector<Instruction> program_;
     bool programReady_ = false;
     uint64_t pc_ = 0;
+    uint64_t executed_ = 0;
+    std::vector<size_t> loopEnds_;
+    std::vector<size_t> loopStarts_;
+    std::vector<std::pair<size_t, uint32_t>> loopStack_; // FOR_END index and remaining iterations
     uint64_t total_;
     uint8_t sleepTicks_ = 0;
     std::unordered_map<uint16_t, uint16_t> vars_;   // uint16 variables, clamped to [0, 65535]

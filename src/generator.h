@@ -18,7 +18,8 @@ public:
     std::vector<Instruction> generate(uint64_t count);
 
 private:
-    Instruction randomInstruction();
+    Instruction randomInstruction(unsigned loopDepth);
+    void generateInto(std::vector<Instruction>& program, uint64_t count, unsigned loopDepth);
 
     Config cfg_;
     std::mt19937_64 rng_;

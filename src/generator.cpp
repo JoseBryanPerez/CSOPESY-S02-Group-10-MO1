@@ -4,7 +4,7 @@
 #include <string>
 
 namespace {
-// Relative weight of SLEEP in the instruction mix (out of 87 total, ~2.3%).
+// Relative weights of SLEEP and FOR in the instruction mix.
 // SLEEP is deliberately rare: every SLEEP sends the process to the BACK of the ready queue,
 // so a high rate makes processes crawl (or never finish) when the queue is long.
 constexpr int kSleepWeight = 2;
@@ -22,9 +22,9 @@ uint64_t ProgramGenerator::pickLength() {
     return std::uniform_int_distribution<uint64_t>(lo, hi)(rng_);
 }
 
-Instruction ProgramGenerator::randomInstruction() {
-    // Weights: PRINT, DECLARE, ADD, SUBTRACT, SLEEP
-    static const int weights[] = {35, 15, 20, 15, kSleepWeight};
+Instruction ProgramGenerator::randomInstruction(unsigned loopDepth) {
+    // FOR can nest up to the spec's maximum depth of three.
+    const int weights[] = {35, 15, 20, 15, kSleepWeight, loopDepth < 3 ? 5 : 0};
     std::discrete_distribution<int> pick(std::begin(weights), std::end(weights));
     auto anyVar = [&]() { return varPool_[rng_() % varPool_.size()]; };
     auto literal = [&]() { return static_cast<uint32_t>(rng_() % 65536); };
@@ -48,9 +48,13 @@ Instruction ProgramGenerator::randomInstruction() {
             if (rng_() % 2) { ins.flags |= kOperandAIsVar; ins.a = anyVar(); } else { ins.a = literal(); }
             if (rng_() % 2) { ins.flags |= kOperandBIsVar; ins.b = anyVar(); } else { ins.b = literal(); }
             break;
-        default:  // SLEEP(x)
+        case 4:  // SLEEP(x)
             ins.op = OpType::SLEEP;
             ins.a = 1 + rng_() % 10;   // SLEEP takes a uint8 number of ticks
+            break;
+        default:  // FOR([instructions], repeats), followed by its generated body and end marker
+            ins.op = OpType::FOR_BEGIN;
+            ins.a = 2 + rng_() % 3;
             break;
     }
     return ins;
@@ -59,6 +63,20 @@ Instruction ProgramGenerator::randomInstruction() {
 std::vector<Instruction> ProgramGenerator::generate(uint64_t count) {
     std::vector<Instruction> program;
     program.reserve(count);
-    for (uint64_t i = 0; i < count; ++i) program.push_back(randomInstruction());
+    generateInto(program, count, 0);
     return program;
+}
+
+void ProgramGenerator::generateInto(std::vector<Instruction>& program, uint64_t count, unsigned loopDepth) {
+    for (uint64_t i = 0; i < count; ++i) {
+        Instruction instruction = randomInstruction(loopDepth);
+        program.push_back(instruction);
+        if (instruction.op == OpType::FOR_BEGIN) {
+            const uint64_t bodyLength = 2 + rng_() % 3;
+            generateInto(program, bodyLength, loopDepth + 1);
+            Instruction end;
+            end.op = OpType::FOR_END;
+            program.push_back(end);
+        }
+    }
 }

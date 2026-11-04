@@ -5,7 +5,6 @@
 //   ADD(var1, var2/val, var3/val) SUBTRACT(var1, var2/val, var3/val)
 //   SLEEP(x)
 //
-// (FOR([instructions], repeats) is NOT part of this build yet -- see TEAM_TASKS.md, chunk 2.)
 //
 // Design note: the sample config spawns a new 1000-2000 instruction process *every tick*,
 // so memory per instruction matters. An Instruction is therefore a flat 12-byte record
@@ -16,7 +15,9 @@
 #include <unordered_map>
 #include <vector>
 
-enum class OpType : uint8_t { PRINT, DECLARE, ADD, SUBTRACT, SLEEP };
+// FOR is stored as a FOR_BEGIN marker (a = repeat count) and matching FOR_END marker.
+// The markers let programs stay compact and keep the instruction record flat.
+enum class OpType : uint8_t { PRINT, DECLARE, ADD, SUBTRACT, SLEEP, FOR_BEGIN, FOR_END };
 
 enum InstructionFlags : uint8_t {
     kOperandAIsVar = 1 << 0,  // ADD/SUBTRACT: operand `a` is a variable id (else literal)
