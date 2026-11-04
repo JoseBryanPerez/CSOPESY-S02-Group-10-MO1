@@ -76,12 +76,19 @@ bool Console::dispatch(const std::vector<std::string>& args) {
         return true;
     }
 
-    if (cmd == "screen") cmdScreen(args);
-    else if (cmd == "scheduler-start" || cmd == "scheduler-test") cmdSchedulerStart();   // old name kept as alias
-    else if (cmd == "scheduler-stop") cmdSchedulerStop();
-    else if (cmd == "report-util") cmdReportUtil();
-    else if (cmd == "clear" || cmd == "cls") clearScreen();
-    else std::cout << "Unknown command: " << args[0] << "\n";
+    if (currentScreen_ == Screen::MainMenu) {
+        if (cmd == "screen") cmdScreen(args);
+        else if (cmd == "scheduler-start" || cmd == "scheduler-test") cmdSchedulerStart();   // old name kept as alias
+        else if (cmd == "scheduler-stop") cmdSchedulerStop();
+        else if (cmd == "report-util") cmdReportUtil();
+        else if (cmd == "clear" || cmd == "cls") clearScreen();
+        else std::cout << "Unknown command: " << args[0] << "\n";
+    } else if (currentScreen_ == Screen::Process) {
+        if (cmd == "process-smi") showProcessInformation(false);
+        else if (cmd == "exit-process") currentScreen_ = Screen::MainMenu; // Note: Naming the command "exit" will close cmd
+        else std::cout << "Unknown command: " << args[0] << "\n";
+    }
+    
     return true;
 }
 
@@ -161,10 +168,16 @@ void Console::cmdScreen(const std::vector<std::string>& args) {
     if (args.size() == 2 && args[1] == "-ls") {
         screenList();
     } else if (args.size() >= 2 && args[1] == "-s") {
+        currentProcessSMI_ = args[2];
+        currentScreen_ = Screen::Process;
+
         clearScreen();
-        showProcessInformation(args[2], true);
+        showProcessInformation(true);
     } else if (args.size() >= 2 && args[1] == "-r") {
-        showProcessInformation(args[2], true);
+        currentProcessSMI_ = args[2];
+        currentScreen_ = Screen::Process;
+
+        showProcessInformation(true);
     } else {
         std::cout << "Usage:\n"
                      "  screen -s <process name>   create a new process and attach to its screen  (not implemented yet)\n"
@@ -175,6 +188,6 @@ void Console::cmdScreen(const std::vector<std::string>& args) {
 
 void Console::screenList() { std::cout << scheduler_->buildUtilizationReport(); }
 
-void Console::showProcessInformation(const std::string& processName, bool excludeFinished) {
-    std::cout << scheduler_->buildLogReportFromProcess(processName, excludeFinished);
+void Console::showProcessInformation(bool excludeFinished) {
+    std::cout << scheduler_->buildLogReportFromProcess(currentProcessSMI_, excludeFinished);
 }
