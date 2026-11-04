@@ -10,6 +10,8 @@
 
 namespace {
 
+constexpr uint64_t kMaxConfigValue = uint64_t{1} << 32;
+
 bool parseUnsigned(const std::string& text, uint64_t& out) {
     if (text.empty() || text[0] == '-') return false;
     errno = 0;
@@ -20,9 +22,19 @@ bool parseUnsigned(const std::string& text, uint64_t& out) {
     return true;
 }
 
+bool validateRange(const std::string& key, uint64_t value, uint64_t min, uint64_t max,
+                   int lineNo, std::string& error) {
+    if (value >= min && value <= max) return true;
+    std::ostringstream message;
+    message << "config line " << lineNo << ": '" << key << "' must be in [" << min << ", " << max << "].";
+    error = message.str();
+    return false;
+}
+
 }  // namespace
 
 bool loadConfig(const std::string& path, Config& out, std::string& error) {
+    error.clear();
     std::ifstream in(path);
     if (!in) {
         error = "Could not open config file '" + path + "'.";
@@ -48,8 +60,18 @@ bool loadConfig(const std::string& path, Config& out, std::string& error) {
             return false;
         }
 
+        std::string extra;
+        if (iss >> extra) {
+            error = "config line " + std::to_string(lineNo) + ": unexpected extra value '" + extra + "'.";
+            return false;
+        }
+
         if (key == "scheduler") {
             cfg.scheduler = util::toLower(value);
+            if (cfg.scheduler != "fcfs" && cfg.scheduler != "rr") {
+                error = "config line " + std::to_string(lineNo) + ": scheduler must be 'fcfs' or 'rr'.";
+                return false;
+            }
             continue;
         }
 
@@ -73,7 +95,21 @@ bool loadConfig(const std::string& path, Config& out, std::string& error) {
                     "' is not a valid non-negative integer for '" + key + "'.";
             return false;
         }
+        uint64_t min = 0;
+        uint64_t max = kMaxConfigValue;
+        if (key == "num-cpu") {
+            min = 1;
+            max = 128;
+        } else if (key != "delays-per-exec" && key != "delay-per-exec") {
+            min = 1;
+        }
+        if (!validateRange(key, n, min, max, lineNo, error)) return false;
         *target = n;
+    }
+
+    if (cfg.minIns > cfg.maxIns) {
+        error = "config: 'min-ins' must be less than or equal to 'max-ins'.";
+        return false;
     }
 
     out = cfg;

@@ -225,13 +225,10 @@ std::string Scheduler::buildLogReportFromProcess(const std::string& processName)
         std::strftime(denormalizedTime, sizeof(denormalizedTime), "%m/%d/%Y %I:%M:%S%p", localtime);
         
         out << "(" << denormalizedTime << ") Core:" << logEntry.core << " ";
-        if (logEntry.textId == 0) {
-            out << "\"Hello world from "<< p->name() <<"!\"\n";
-        } else if (logEntry.hasValue) {
-            out << logEntry.value << "\n";
-        } else {
-            out << "\n";
-        }
+        if (logEntry.textId == 0) out << "\"Hello world from " << p->name() << "!\"";
+        else out << Symbols::instance().text(logEntry.textId);
+        if (logEntry.hasValue) out << logEntry.value;
+        out << "\n";
     }
 
     out << "\n";
