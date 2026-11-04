@@ -50,7 +50,7 @@ public:
 
     // Text for "screen -ls" and the contents of csopesy-log.txt (mockup lines 38-54).
     std::string buildUtilizationReport() const;
-    std::string buildLogReportFromProcess(const std::string& processName) const;
+    std::string buildLogReportFromProcess(const std::string& processName, bool excludeFinished) const;
 
     uint64_t cpuCycles() const;
     const Config& config() const { return cfg_; }

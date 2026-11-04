@@ -202,7 +202,7 @@ std::string Scheduler::buildUtilizationReport() const {
     return out.str();
 }
 
-std::string Scheduler::buildLogReportFromProcess(const std::string& processName) const {
+std::string Scheduler::buildLogReportFromProcess(const std::string& processName, bool excludeFinished) const {
     std::lock_guard<std::mutex> lock(mtx_);
 
     auto it = byName_.find(processName);
@@ -215,6 +215,12 @@ std::string Scheduler::buildLogReportFromProcess(const std::string& processName)
     }
 
     auto p = it->second;
+    // If excluding finished process then it is considered not found
+    if (excludeFinished && p->isComplete()) {    
+        out << "Process " << processName << " not found.\n\n";
+        return out.str();
+    }
+
     out << "Process name: " << p->name() << "\n";
     out << "ID: " << p->id() << "\n";
     out << "Logs:\n";
