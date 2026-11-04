@@ -241,7 +241,7 @@ std::string Scheduler::buildLogReportFromProcess(const std::string& processName,
     if (p->isComplete()) {
         out << "Finished!\n";
     } else {
-        out << "Current instruction line: " << p->instructionsExecuted() + 1 << "\n";
+        out << "Current instruction line: " << p->getCurrentLine() << "\n";
         out << "Lines of code: " << p->totalInstructions() << "\n";
     }
     out << "\n";
