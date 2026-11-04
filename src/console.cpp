@@ -160,7 +160,10 @@ void Console::cmdReportUtil() {
 void Console::cmdScreen(const std::vector<std::string>& args) {
     if (args.size() == 2 && args[1] == "-ls") {
         screenList();
-    } else if (args.size() >= 2 && (args[1] == "-s" || args[1] == "-r")) {
+    } else if (args.size() >= 2 && args[1] == "-s") {
+        clearScreen();
+        showProcessInformation(args[2]);
+    } else if (args.size() >= 2 && args[1] == "-r") {
         std::cout << "screen " << args[1] << " is not implemented in this build yet.\n";
     } else {
         std::cout << "Usage:\n"
@@ -171,3 +174,5 @@ void Console::cmdScreen(const std::vector<std::string>& args) {
 }
 
 void Console::screenList() { std::cout << scheduler_->buildUtilizationReport(); }
+
+void Console::showProcessInformation(const std::string& processName) { std::cout << scheduler_->buildLogReportFromProcess(processName); }

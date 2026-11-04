@@ -50,6 +50,7 @@ public:
 
     // Text for "screen -ls" and the contents of csopesy-log.txt (mockup lines 38-54).
     std::string buildUtilizationReport() const;
+    std::string buildLogReportFromProcess(const std::string& processName) const;
 
     uint64_t cpuCycles() const;
     const Config& config() const { return cfg_; }
@@ -58,7 +59,7 @@ protected:
     virtual void runCores();
     void finishProcess(Core& core);
     void sleepProcess(Core& core, uint8_t ticks);
-
+    
     Config cfg_;
     uint64_t tickIntervalUs_;
     ProgramGenerator generator_;

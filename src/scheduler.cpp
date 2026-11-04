@@ -201,3 +201,47 @@ std::string Scheduler::buildUtilizationReport() const {
     out << rule << "\n";
     return out.str();
 }
+
+std::string Scheduler::buildLogReportFromProcess(const std::string& processName) const {
+    std::lock_guard<std::mutex> lock(mtx_);
+
+    auto it = byName_.find(processName);
+    std::ostringstream out;
+
+    // If process is not found    
+    if (it == byName_.end()) {    
+        out << "Process " << processName << " not found.\n\n";
+        return out.str();
+    }
+
+    auto p = it->second;
+    out << "Process name: " << p->name() << "\n";
+    out << "ID: " << p->id() << "\n";
+    out << "Logs:\n";
+
+    for (const auto& logEntry : p->logs()) {
+        std::tm* localtime = std::localtime(&logEntry.when);
+        char denormalizedTime[50];
+        std::strftime(denormalizedTime, sizeof(denormalizedTime), "%m/%d/%Y %I:%M:%S%p", localtime);
+        
+        out << "(" << denormalizedTime << ") Core:" << logEntry.core << " ";
+        if (logEntry.textId == 0) {
+            out << "\"Hello world from "<< p->name() <<"!\"\n";
+        } else if (logEntry.hasValue) {
+            out << logEntry.value << "\n";
+        } else {
+            out << "\n";
+        }
+    }
+
+    out << "\n";
+    if (p->isComplete()) {
+        out << "Finished!\n";
+    } else {
+        out << "Current instruction line: " << p->instructionsExecuted() + 1 << "\n";
+        out << "Lines of code: " << p->totalInstructions() << "\n";
+    }
+    out << "\n";
+
+    return out.str();
+}

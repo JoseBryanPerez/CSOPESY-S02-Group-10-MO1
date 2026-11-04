@@ -25,6 +25,7 @@ private:
 
     // screen sub-commands
     void screenList();
+    void showProcessInformation(const std::string& processName);
 
     // helpers
     static void clearScreen();
