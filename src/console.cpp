@@ -164,7 +164,7 @@ void Console::cmdScreen(const std::vector<std::string>& args) {
         clearScreen();
         showProcessInformation(args[2], true);
     } else if (args.size() >= 2 && args[1] == "-r") {
-        std::cout << "screen " << args[1] << " is not implemented in this build yet.\n";
+        showProcessInformation(args[2], true);
     } else {
         std::cout << "Usage:\n"
                      "  screen -s <process name>   create a new process and attach to its screen  (not implemented yet)\n"
