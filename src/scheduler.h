@@ -57,6 +57,7 @@ public:
 
 protected:
     virtual void runCores();
+    virtual void dispatchIdleCores();
     void finishProcess(Core& core);
     void sleepProcess(Core& core, uint8_t ticks);
     
@@ -82,7 +83,6 @@ private:
 
     void spawnAutoProcess();           // scheduler-start's pN generator
     void wakeSleepers();
-    void dispatchIdleCores();
 
     std::shared_ptr<Process> makeProcess(const std::string& name);
     
