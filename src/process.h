@@ -49,7 +49,7 @@ public:
 
     uint64_t instructionsExecuted() const { return executed_; }   // includes repeated loop body steps
     uint64_t totalInstructions() const { return total_; }   // "Lines of code"
-    uint64_t getCurrentLine() const { return pc_ + 1; }
+    uint64_t getCurrentLine() const { return std::min(pc_ + 1, total_); }
     bool isComplete() const { return programReady_ && pc_ >= total_; }
 
     // Executes exactly ONE instruction on `coreId`. Precondition: hasProgram() && !isComplete().
