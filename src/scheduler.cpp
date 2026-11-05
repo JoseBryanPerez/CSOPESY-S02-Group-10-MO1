@@ -190,13 +190,13 @@ std::string Scheduler::buildUtilizationReport() const {
         if (!c.busy()) continue;
         const Process& p = *c.proc;
         out << std::left << std::setw(12) << p.name() << " (" << util::formatTime(p.startTime) << ")    Core: "
-            << std::setw(6) << c.id << p.instructionsExecuted() << " / " << p.totalInstructions() << "\n";
+            << std::setw(6) << c.id << p.getCurrentLine() << " / " << p.totalInstructions() << "\n";
     }
 
     out << "\nFinished processes:\n";
     for (const auto& p : finished_) {
         out << std::left << std::setw(12) << p->name() << " (" << util::formatTime(p->startTime)
-            << ")    Finished     " << p->instructionsExecuted() << " / " << p->totalInstructions() << "\n";
+            << ")    Finished     " << p->getCurrentLine() << " / " << p->totalInstructions() << "\n";
     }
     out << rule << "\n";
     return out.str();
