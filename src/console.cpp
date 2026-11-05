@@ -86,7 +86,7 @@ bool Console::dispatch(const std::vector<std::string>& args) {
         else std::cout << "Unknown command: " << args[0] << "\n";
     } else if (currentScreen_ == Screen::Process) {
         if (cmd == "process-smi") showProcessInformation(false);
-        else if (cmd == "exit") currentScreen_ = Screen::MainMenu; // Note: Naming the command "exit" will close cmd
+        else if (cmd == "exit") currentScreen_ = Screen::MainMenu;
         else std::cout << "Unknown command: " << args[0] << "\n";
     }
     
