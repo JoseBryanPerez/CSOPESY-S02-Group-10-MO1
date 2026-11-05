@@ -65,18 +65,19 @@ void Console::run() {
 bool Console::dispatch(const std::vector<std::string>& args) {
     const std::string cmd = util::toLower(args[0]);
 
-    if (cmd == "exit") return false;
-
-    if (cmd == "initialize") {
-        cmdInitialize();
-        return true;
-    }
-    if (!initialized_) {
-        std::cout << "Please run 'initialize' first.\n";
-        return true;
-    }
-
     if (currentScreen_ == Screen::MainMenu) {
+        if (cmd == "exit") return false;
+
+        if (cmd == "initialize") {
+            cmdInitialize();
+            return true;
+        }
+        
+        if (!initialized_) {
+            std::cout << "Please run 'initialize' first.\n";
+            return true;
+        }
+
         if (cmd == "screen") cmdScreen(args);
         else if (cmd == "scheduler-start" || cmd == "scheduler-test") cmdSchedulerStart();   // old name kept as alias
         else if (cmd == "scheduler-stop") cmdSchedulerStop();
@@ -85,7 +86,7 @@ bool Console::dispatch(const std::vector<std::string>& args) {
         else std::cout << "Unknown command: " << args[0] << "\n";
     } else if (currentScreen_ == Screen::Process) {
         if (cmd == "process-smi") showProcessInformation(false);
-        else if (cmd == "exit-process") currentScreen_ = Screen::MainMenu; // Note: Naming the command "exit" will close cmd
+        else if (cmd == "exit") currentScreen_ = Screen::MainMenu; // Note: Naming the command "exit" will close cmd
         else std::cout << "Unknown command: " << args[0] << "\n";
     }
     
