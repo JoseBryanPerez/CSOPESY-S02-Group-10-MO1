@@ -5,7 +5,7 @@ class RoundRobinScheduler : public Scheduler {
 public:
     RoundRobinScheduler(const Config& cfg, uint64_t tickIntervalUs);
 private:
-    void dispatchIdleCores() override;
+    void dispatchCore(Core& core) override;
     void runCores() override;
     void requeueProcess(Core& core);
 

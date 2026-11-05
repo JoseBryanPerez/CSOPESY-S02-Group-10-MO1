@@ -58,7 +58,6 @@ void Scheduler::tick() {
         spawnAutoProcess();
     }
     wakeSleepers();
-    dispatchIdleCores();
     runCores();
 }
 
@@ -89,29 +88,32 @@ void Scheduler::wakeSleepers() {
     }
 }
 
-void Scheduler::dispatchIdleCores() {
-    for (Core& core : cores_) {
-        if (core.busy() || ready_.empty()) continue;
+void Scheduler::dispatchCore(Core& core) {
+    if (ready_.empty()) return;
 
-        std::shared_ptr<Process> p = ready_.front();
-        ready_.pop_front();
+    std::shared_ptr<Process> p = ready_.front();
+    ready_.pop_front();
 
-        core.proc = p;
-        p->state = ProcessState::Running;
-        p->coreId = core.id;
-        if (p->startTime == 0) p->startTime = std::time(nullptr);
-        if (!p->hasProgram()) p->setProgram(generator_.generate(p->totalInstructions()));
-    }
+    core.proc = p;
+    p->state = ProcessState::Running;
+    p->coreId = core.id;
+    if (p->startTime == 0) p->startTime = std::time(nullptr);
+    if (!p->hasProgram()) p->setProgram(generator_.generate(p->totalInstructions()));
 }
 
 void Scheduler::runCores() {
     for (Core& core : cores_) {
-        if (!core.busy()) continue;
+        if (!core.busy()) {
+            dispatchCore(core);
+            if (!core.busy()) continue;
+        }
+
         Process& p = *core.proc;
 
         // e.g. a process whose final instruction was SLEEP: nothing left to run.
         if (p.isComplete()) {
             finishProcess(core);
+            dispatchCore(core);
             continue;
         }
 
@@ -125,8 +127,10 @@ void Scheduler::runCores() {
         p.delayRemaining = cfg_.delaysPerExec;
         if (r == StepResult::Finished) {
             finishProcess(core);
+            dispatchCore(core);
         } else if (r == StepResult::Sleep) {
             sleepProcess(core, p.sleepTicks());
+            dispatchCore(core);
         }
     }
 }

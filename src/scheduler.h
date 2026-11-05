@@ -57,7 +57,7 @@ public:
 
 protected:
     virtual void runCores();
-    virtual void dispatchIdleCores();
+    virtual void dispatchCore(Core& core);
     void finishProcess(Core& core);
     void sleepProcess(Core& core, uint8_t ticks);
     

@@ -9,29 +9,32 @@ RoundRobinScheduler::RoundRobinScheduler(const Config& cfg, uint64_t tickInterva
     //Already initialized in Scheduler
 }
 
-void RoundRobinScheduler::dispatchIdleCores() {
-    for (Core& core : cores_) {
-        if (core.busy() || ready_.empty()) continue;
+void RoundRobinScheduler::dispatchCore(Core& core) {
+    if (ready_.empty()) return;
 
-        std::shared_ptr<Process> p = ready_.front();
-        ready_.pop_front();
+    std::shared_ptr<Process> p = ready_.front();
+    ready_.pop_front();
 
-        core.proc = p;
-        core.ticksRan = 0;
-        p->state = ProcessState::Running;
-        p->coreId = core.id;
-        if (p->startTime == 0) p->startTime = std::time(nullptr);
-        if (!p->hasProgram()) p->setProgram(generator_.generate(p->totalInstructions()));
-    }
+    core.proc = p;
+    core.ticksRan = 0;
+    p->state = ProcessState::Running;
+    p->coreId = core.id;
+    if (p->startTime == 0) p->startTime = std::time(nullptr);
+    if (!p->hasProgram()) p->setProgram(generator_.generate(p->totalInstructions()));
 }
 
 void RoundRobinScheduler::runCores() {
     for (Core& core: cores_) {
-        if (!core.busy()) continue;
+        if (!core.busy()) {
+            dispatchCore(core);
+            if (!core.busy()) continue;
+        }
+
         Process& p = *core.proc;
 
         if (p.isComplete()) {
             finishProcess(core);
+            dispatchCore(core);
             continue;
         }
 
@@ -45,10 +48,13 @@ void RoundRobinScheduler::runCores() {
         core.ticksRan++;
         if (r == StepResult::Finished) {
             finishProcess(core);
+            dispatchCore(core);
         } else if (r == StepResult::Sleep) {
             sleepProcess(core, p.sleepTicks());
+            dispatchCore(core);
         } else if (core.ticksRan >= quantumCycles_) {
             requeueProcess(core);
+            dispatchCore(core);
         }
     }
 }
